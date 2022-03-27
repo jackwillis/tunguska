@@ -11,10 +11,22 @@ enum TuningInterval {
 }
 
 impl TuningInterval {
-    const CENTS_PER_OCTAVE: i32 = 1200;
+    const CENTS_PER_OCTAVE: Cents = 1_200.0;
+
+    pub fn from_cents(cents: Cents) -> Self {
+        Self::Cents(cents)
+    }
+
+    pub fn from_ratio(numer: i32, denom: i32) -> Option<Self> {
+        if denom == 0 {
+            None
+        } else {
+            Some(Self::Ratio(Ratio::new(numer, denom)))
+        }
+    }
 
     fn ratio_to_cents(ratio: Ratio) -> Cents {
-        ratio.to_f64().unwrap().log2() * TuningInterval::CENTS_PER_OCTAVE as Cents
+        ratio.to_f64().unwrap().log2() * TuningInterval::CENTS_PER_OCTAVE
     }
 
     pub fn cents(&self) -> Cents {
@@ -28,9 +40,9 @@ impl TuningInterval {
 fn main() {
     println!("Hello, world!");
 
-    let fifth = TuningInterval::Ratio(Ratio::new(3, 2));
+    let fifth = TuningInterval::from_ratio(3, 2).unwrap();
     println!("fifth = {:?}, cents = {}", fifth, fifth.cents());
 
-    let third = TuningInterval::Cents(301.4);
+    let third = TuningInterval::from_cents(301.4);
     println!("third = {:?}, cents = {}", third, third.cents());
 }
