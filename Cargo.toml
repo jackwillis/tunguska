@@ -1,0 +1,9 @@
+[package]
+name = "tunguska"
+version = "0.1.0"
+edition = "2021"
+authors = ["Jack Willis <jack@attac.us>"]
+description = "tuning and temperaments"
+license = "MIT"
+
+[dependencies]
