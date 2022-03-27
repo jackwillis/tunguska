@@ -1,48 +1,59 @@
-use num_rational::Rational32;
-use num_traits::ToPrimitive;
+type CentsInner = f64;
+type RatioInner = num_rational::Ratio<i32>;
 
-type Cents = f64;
-type Ratio = Rational32;
-
-#[derive(Clone, Copy, Debug)]
-enum TuningInterval {
-    Cents(Cents),
-    Ratio(Ratio),
+trait TuningInterval {
+    const CENTS_PER_OCTAVE: CentsInner = 1_200.0;
+    fn cents(&self) -> CentsInner;
+    fn ratio(&self) -> RatioInner;
 }
 
-impl TuningInterval {
-    const CENTS_PER_OCTAVE: Cents = 1_200.0;
+#[derive(Clone, Copy, Debug)]
+struct Cents(CentsInner);
 
-    pub fn from_cents(cents: Cents) -> Self {
-        Self::Cents(cents)
+impl Cents {
+    fn new(cents: CentsInner) -> Option<Self> {
+        Some(Cents(cents))
+    }
+}
+
+impl TuningInterval for Cents {
+    fn cents(&self) -> CentsInner {
+        self.0
     }
 
-    pub fn from_ratio(numer: i32, denom: i32) -> Option<Self> {
-        if denom == 0 {
-            None
-        } else {
-            Some(Self::Ratio(Ratio::new(numer, denom)))
-        }
+    fn ratio(&self) -> RatioInner {
+        //FIXME
+        RatioInner::new(1, 1)
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+struct Ratio(RatioInner);
+
+impl Ratio {
+    fn new(numer: i32, denom: i32) -> Option<Self> {
+        Some(Ratio(RatioInner::new(numer, denom)))
+    }
+}
+
+impl TuningInterval for Ratio {
+    fn cents(&self) -> CentsInner {
+        let ratio_as_double = num_traits::ToPrimitive::to_f64(&self.0).unwrap();
+        let octaves = ratio_as_double.log2();
+        octaves * Self::CENTS_PER_OCTAVE
     }
 
-    fn ratio_to_cents(ratio: Ratio) -> Cents {
-        ratio.to_f64().unwrap().log2() * TuningInterval::CENTS_PER_OCTAVE
-    }
-
-    pub fn cents(&self) -> Cents {
-        match self {
-            TuningInterval::Cents(cents) => *cents,
-            TuningInterval::Ratio(ratio) => TuningInterval::ratio_to_cents(*ratio),
-        }
+    fn ratio(&self) -> RatioInner {
+        self.0
     }
 }
 
 fn main() {
     println!("Hello, world!");
 
-    let fifth = TuningInterval::from_ratio(3, 2).unwrap();
+    let fifth = Ratio::new(3, 2).unwrap();
     println!("fifth = {:?}, cents = {}", fifth, fifth.cents());
 
-    let third = TuningInterval::from_cents(301.4);
+    let third = Cents::new(301.4).unwrap();
     println!("third = {:?}, cents = {}", third, third.cents());
 }
